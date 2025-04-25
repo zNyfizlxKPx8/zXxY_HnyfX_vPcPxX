@@ -106,7 +106,6 @@
 
 
 
-
 -- xOxMacrosxOx De xRP, Protege tus xmacros si el name de el player no esta en la lista no podra usar los xscripts.
 
 local allowedNames = {
