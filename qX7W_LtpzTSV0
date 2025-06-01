@@ -543,7 +543,7 @@ local listaMacros = {}
 local singleTargetSpell = 'exori con'
 local multiTargetSpell = 'exevo mas san'
 local distance =1
-local amountOfMonsters = 3
+local amountOfMonsters = 2
 
 local antipk = macro(2000, "Antipk", function()
     local isSafe = true
@@ -570,7 +570,7 @@ end)
 local singleTargetSpell = 'exori con'
 local multiTargetSpell = 'exevo mas san'
 local distance = 4
-local amountOfMonsters = 3
+local amountOfMonsters = 2
 
 local noantipkrp = macro(2000, "Multispell", function()
     if not g_game.isAttacking() then
