@@ -682,11 +682,11 @@ for _, mac in ipairs(listaMacros) do
     
     -- Tooltip para "Antipk"
     if mac.switch:getText() == "Antipk" then
-        checkbox:setTooltip("Este spell lanza exori con y si hay mas de 3 monster lanza Mas san, cuidando no sacar Pk.")
+        checkbox:setTooltip("Este spell lanza exori con y si hay mas de 2 monster lanza Mas san, cuidando no sacar Pk.")
     end
     -- Tooltip para "Multispell"
     if mac.switch:getText() == "Multispell" then
-        checkbox:setTooltip("Este spell lanza exori con y si hay mas de 3 monster lanza Mas san, No es antipk.")
+        checkbox:setTooltip("Este spell lanza exori con y si hay mas de 2 monster lanza Mas san, No es antipk.")
     end
     -- Tooltip para "utito tempo pro"
     if mac.switch:getText() == "utito tempo pro" then
