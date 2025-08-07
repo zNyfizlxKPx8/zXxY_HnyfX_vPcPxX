@@ -128,6 +128,8 @@ end
 modules.game_textmessage.displayGameMessage("Acceso permitido. Scripts protegidos cargados correctamente.")
 
 -- scripts 
+
+-- scripts 
 setDefaultTab("Spell")
 
 -- Rune: UE - Editor -- 
