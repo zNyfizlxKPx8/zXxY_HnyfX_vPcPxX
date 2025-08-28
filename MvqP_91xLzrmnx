@@ -400,6 +400,7 @@ local function checkAndLoad(runMyScript)
 end
 
 checkAndLoad(function()
+modules.game_textmessage.displayGameMessage("Acceso permitido. Scripts protegidos cargados correctamente.")
 
 setDefaultTab('Main')
 --Underbot color
@@ -1732,3 +1733,4 @@ onRemoveItem(setFrames)
 onContainerUpdateItem(setFrames)
 
 end)
+
