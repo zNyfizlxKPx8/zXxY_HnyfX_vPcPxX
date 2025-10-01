@@ -1190,6 +1190,7 @@ local speed_macro = macro(10, "Equip Speed EQ", function(m)
     end)
 end, equipTab)
 
+setDefaultTab("War")
 -- Exiva
 local configName = modules.game_bot.contentsPanel.config:getCurrentOption().text
 local pathBot = "/bot/" .. configName .. "/"
