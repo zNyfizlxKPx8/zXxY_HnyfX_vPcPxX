@@ -505,24 +505,8 @@ end
 -- ==========================
 
 local tradeNpcs = storage.tradeNpcs or {
-  "Rashid", "Yasir", "Grizzly Adams", "Znozel", "Esrik",
-  "Captain Seahorse", "Black Bert", "Willard", "Sandra",
-  "Dario", "Eryn", "Flint", "Isimov", "Lorek", "Sam", 
-  "[Magic] Xodet","[Magic] Malah","[Magic] Magicka","[Loot] Item Dealer","[Equip] turvy","[Misc] Benjamin",
-  "[Equip] Sam","[Tools] Gorn","[Food] Frodo","[Jewelry] Hanna","[Potions] Lily",
-  "[Equip] Obi","[Tanner] Tom","[Equip] Lee'Delle","[Equip] Maun","[Magic] Rachel",
-  "Sarina","[Food] Imalas","Cornelia","[Food] Lector","Perac","[Furniture] Nydala",
-  "Rowenna","[Magic] Sandra","[Food] Luna","[Magic] Thomas","[Magic] Alexander",
-  "[Furniture] Edvard","[Jewelry] Iwan","Rudolph","Beatrice","[Equip] Willard",
-  "[Bank] Ebenizer","[Food] Bonifaciusr","[Magic] Frederik","Ray","[Jewelry] Gail",
-  "[Equip] Brengus","Perod","Zaidal","[Magic] Tandros","[Magic] Frans","[Magic] Digger",
-  "Odemara","[Jewelry] Carina","[Flowers] Rose","[Food] Rodney","[Food] Livielle",
-  "Nelliem","Chephan","[Music] Julian","Chephan","Shiantis","Lurik","[Magic] Nelly",
-  "[Jewelry/Bank] Jessica","[Jewelry] Oiriz","Gree Dee","[Magic] Chuckles","Vincent","Ahmet",
-  "[Equip] Memech","[Jewelry] Tesha","[Food] Jezzara","[Magic] Fenech","[Magic] Mehkesh",
-  "[Equip] Azil","Habdel","Edoch","[Jewelry] Ishina","[Food] Omur","Halif","[Magic] Asima",
-  "Atrad","[Magic] Rabaz","[Food] Swolt","Murim","[Addon] Item Exchanger","[Addons] Jean",
-  "[Item Renamer] Wright","[Magic] Mana Shop"
+  "Rashid", "
+[Magic] Mana Shop"
 }
 -- ===============================
 -- VENTANA PARA AGREGAR NUEVOS NPCs
